@@ -23,7 +23,7 @@ jobs:
 
     - name: Install build dependencies
       run: |
-        choco install visualstudio2015buildtools -y
+        choco install visualstudio2015community --package-parameters "--allWorkloads --includeRecommended --includeOptional" -y
         choco install nasm -y
         choco install winflexbison3 -y
         choco install strawberryperl -y
