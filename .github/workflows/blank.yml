@@ -12,41 +12,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      MSYSTEM: MINGW64
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Python 3.8
+    - name: Set up MSYS2
       run: |
         sudo apt-get update
-        sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt-get update
-        sudo apt-get install -y python3.8 python3.8-venv python3.8-distutils
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y build-essential mingw-w64
         sudo apt-get install -y curl tar
+        curl -L -o msys2-base.tar.xz http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20210725.tar.xz
+        sudo tar -xf msys2-base.tar.xz -C /opt
+        sudo chown -R $USER:$USER /opt/msys64
+        export PATH=/opt/msys64/usr/bin:$PATH
+        msys2_shell.cmd -defterm -mingw64 -no-start -full-path -here -c 'pacman -Syu --noconfirm'
+        msys2_shell.cmd -defterm -mingw64 -no-start -full-path -here -c 'pacman -S --noconfirm mingw-w64-x86_64-gcc mingw-w64-x86_64-python'
 
-    - name: Download Python source
+    - name: Compile and package Python
       run: |
-        curl -O https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz
-        tar -xzf Python-3.8.20.tgz
-
-    - name: Configure and compile Python
-      run: |
+        export PATH=/opt/msys64/mingw64/bin:$PATH
+        mkdir build
         cd Python-3.8.20
-        ./configure --host=x86_64-w64-mingw32 --build=x86_64-linux-gnu --prefix=$(pwd)/build --enable-shared
+        ./configure
         make -j$(nproc)
-        make install
-
-    - name: Package the installer
-      run: |
-        cd Python-3.8.20/build
+        make install DESTDIR=$(pwd)/../build
+        cd ../build
         zip -r python-3.8.20-x86_64-windows.zip *
 
     - name: Upload installer artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
         name: Python-Installer
-        path: Python-3.8.20/build/python-3.8.20-x86_64-windows.zip
+        path: build/python-3.8.20-x86_64-windows.zip
