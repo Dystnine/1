@@ -20,6 +20,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential mingw-w64
+        sudo apt-get install -y python3.8 python3.8-venv python3.8-distutils
         sudo apt-get install -y curl tar
 
     - name: Download Python source
@@ -30,7 +31,7 @@ jobs:
     - name: Configure and compile Python
       run: |
         cd Python-3.8.20
-        ./configure --host=x86_64-w64-mingw32 --build=x86_64-linux-gnu --prefix=$(pwd)/build
+        ./configure --host=x86_64-w64-mingw32 --build=x86_64-linux-gnu --prefix=$(pwd)/build --enable-shared
         make -j$(nproc)
         make install
 
