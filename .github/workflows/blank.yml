@@ -1,4 +1,4 @@
-name: Build Python Installer
+name: Build Python Installer for Windows on Linux
 
 on:
   push:
@@ -10,41 +10,37 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-
-    - name: Install build dependencies
+    - name: Install dependencies
       run: |
-        choco install visualstudio2015community --package-parameters "--allWorkloads --includeRecommended --includeOptional" -y
-        choco install nasm -y
-        choco install winflexbison3 -y
-        choco install strawberryperl -y
+        sudo apt-get update
+        sudo apt-get install -y build-essential mingw-w64
+        sudo apt-get install -y curl tar
 
     - name: Download Python source
       run: |
         curl -O https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz
         tar -xzf Python-3.8.20.tgz
 
-    - name: Compile Python
+    - name: Configure and compile Python
       run: |
         cd Python-3.8.20
-        tools\buildbot\build.bat --no-tkinter -p x64
+        ./configure --host=x86_64-w64-mingw32 --build=x86_64-linux-gnu --prefix=$(pwd)/build
+        make -j$(nproc)
+        make install
 
     - name: Package the installer
       run: |
-        cd PCbuild\amd64
-        msiexec /a python.msi TARGETDIR=%cd%\PythonInstaller /qn
+        cd Python-3.8.20/build
+        zip -r python-3.8.20-x86_64-windows.zip *
 
     - name: Upload installer artifact
       uses: actions/upload-artifact@v4
       with:
         name: Python-Installer
-        path: PythonInstaller/*
+        path: Python-3.8.20/build/python-3.8.20-x86_64-windows.zip
