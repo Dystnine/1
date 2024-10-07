@@ -22,7 +22,7 @@ jobs:
 
     - name: Install Visual Studio 2015 Build Tools
       run: |
-        choco install visualstudio2015community --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --includeRecommended --includeOptional"
+        choco install visualstudio2015buildtools --version 14.0.25420.1 --package-parameters "--passive --norestart --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
       shell: cmd
 
     - name: Set up MSVC environment variables for VS2015
