@@ -1,51 +1,50 @@
-name: Build Python Windows Installer
+name: Build Python Installer
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.0.2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
 
-      - name: Download Python Source
-        run: |
-          Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz" -OutFile "Python-3.8.20.tgz"
+    - name: Install build dependencies
+      run: |
+        choco install visualstudio2019buildtools -y
+        choco install nasm -y
+        choco install winflexbison3 -y
+        choco install strawberryperl -y
 
-      - name: Extract Source
-        run: |
-          tar -xzf Python-3.8.20.tgz
+    - name: Download Python source
+      run: |
+        curl -O https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz
+        tar -xzf Python-3.8.20.tgz
 
-      - name: Configure Python Source
-        run: |
-          cd Python-3.8.20
-          .\configure.bat --enable-optimizations
+    - name: Compile Python
+      run: |
+        cd Python-3.8.20
+        tools\buildbot\build.bat --no-tkinter -p x64
 
-      - name: Build Python
-        run: |
-          cd Python-3.8.20
-          nmake
+    - name: Package the installer
+      run: |
+        cd PCbuild\amd64
+        msiexec /a python.msi TARGETDIR=%cd%\PythonInstaller /qn
 
-      - name: Test Python
-        run: |
-          cd Python-3.8.20
-          nmake test
-
-      - name: Create Installer
-        run: |
-          cd Python-3.8.20
-          # 这里需要创建安装包的命令，具体命令依赖于打包工具，例如Inno Setup或NSIS
-          # 假设你有一个名为create_installer.bat的脚本在仓库中
-          .\create_installer.bat
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PythonInstaller
-          path: |
-            Python-3.8.20/dist/*
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: Python-Installer
+        path: PythonInstaller/*
