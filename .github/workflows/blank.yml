@@ -23,7 +23,7 @@ jobs:
 
     - name: Install build dependencies
       run: |
-        choco install visualstudio2019buildtools -y
+        choco install visualstudio2015buildtools -y
         choco install nasm -y
         choco install winflexbison3 -y
         choco install strawberryperl -y
@@ -44,7 +44,7 @@ jobs:
         msiexec /a python.msi TARGETDIR=%cd%\PythonInstaller /qn
 
     - name: Upload installer artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
         name: Python-Installer
         path: PythonInstaller/*
