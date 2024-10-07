@@ -1,4 +1,4 @@
-name: Build Python Installer for Windows on Linux
+name: Build Python Installer for Windows
 
 on:
   push:
@@ -10,39 +10,42 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
-    env:
-      MSYSTEM: MINGW64
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up MSYS2
+    - name: Install Chocolatey
       run: |
-        sudo apt-get update
-        sudo apt-get install -y curl tar
-        curl -L -o msys2-base.tar.xz http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20210725.tar.xz
-        sudo tar -xf msys2-base.tar.xz -C /opt
-        sudo chown -R $USER:$USER /opt/msys64
-        export PATH=/opt/msys64/usr/bin:$PATH
-        msys2_shell.cmd -defterm -mingw64 -no-start -full-path -here -c 'pacman -Syu --noconfirm'
-        msys2_shell.cmd -defterm -mingw64 -no-start -full-path -here -c 'pacman -S --noconfirm mingw-w64-x86_64-gcc mingw-w64-x86_64-python'
+        Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-    - name: Compile and package Python
+    - name: Install Visual Studio 2015 Build Tools
       run: |
-        export PATH=/opt/msys64/mingw64/bin:$PATH
-        mkdir build
+        choco install visualstudio2015community --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --includeRecommended --includeOptional"
+      shell: cmd
+
+    - name: Set up MSVC environment variables for VS2015
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+
+    - name: Download Python source
+      run: |
+        curl -O https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz
+        tar -xzf Python-3.8.20.tgz
+
+    - name: Configure and compile Python
+      run: |
         cd Python-3.8.20
-        ./configure
-        make -j$(nproc)
-        make install DESTDIR=$(pwd)/../build
-        cd ../build
-        zip -r python-3.8.20-x86_64-windows.zip *
+        PCbuild\build.bat -e -d
+
+    - name: Package the installer
+      run: |
+        cd Python-3.8.20\PCbuild\amd64
+        powershell Compress-Archive -Path . -DestinationPath python-3.8.20-windows.zip
 
     - name: Upload installer artifact
       uses: actions/upload-artifact@v4
       with:
         name: Python-Installer
-        path: build/python-3.8.20-x86_64-windows.zip
+        path: Python-3.8.20/PCbuild/amd64/python-3.8.20-windows.zip
