@@ -16,14 +16,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Python 3.9 dependencies
+    - name: Setup cache for Chocolatey
+      uses: actions/cache@v2
+      with:
+        path: C:\ProgramData\chocolatey\lib
+        key: ${{ runner.os }}-choco-${{ hashFiles('**/build-python-3.9.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-choco-
+
+    - name: Install dependencies
       run: |
         choco install -y nasm
         choco install -y strawberryperl
         choco install -y winflexbison3
         choco install -y ninja
         choco install -y visualstudio-installer
-        choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
+        choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional" --timeout 0
 
     - name: Download Python 3.9 Source Code
       run: |
@@ -36,7 +44,7 @@ jobs:
         PCbuild\build.bat -e -p x64
 
     - name: Archive Build Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
         name: python-3.9.20-build
         path: Python-3.9.20\PCbuild\amd64
