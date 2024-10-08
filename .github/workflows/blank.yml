@@ -1,4 +1,4 @@
-name: Build Python Installer for Windows
+name: Build Python 3.4
 
 on:
   push:
@@ -13,39 +13,31 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Install Chocolatey
+    - name: Set up Python 3.4 dependencies
       run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        choco install -y nasm
+        choco install -y strawberryperl
+        choco install -y winflexbison3
+        choco install -y ninja
 
-    - name: Install Visual Studio 2015 Build Tools
+    - name: Download Python 3.4 Source Code
       run: |
-        choco install visualstudio2015buildtools --version 14.0.25420.1 --package-parameters "--passive --norestart --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
-      shell: cmd
+        curl -O https://www.python.org/ftp/python/3.4.10/Python-3.4.10.tgz
+        tar xzf Python-3.4.10.tgz
 
-    - name: Set up MSVC environment variables for VS2015
+    - name: Configure and Build
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+        cd Python-3.4.10
+        PCbuild\build.bat -e
 
-    - name: Download Python source
-      run: |
-        curl -O https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz
-        tar -xzf Python-3.8.20.tgz
-
-    - name: Configure and compile Python
-      run: |
-        cd Python-3.8.20
-        PCbuild\build.bat -e -d
-
-    - name: Package the installer
-      run: |
-        cd Python-3.8.20\PCbuild\amd64
-        powershell Compress-Archive -Path . -DestinationPath python-3.8.20-windows.zip
-
-    - name: Upload installer artifact
+    - name: Archive Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Python-Installer
-        path: Python-3.8.20/PCbuild/amd64/python-3.8.20-windows.zip
+        name: python-3.4.10-build
+        path: Python-3.4.10\PCbuild\amd64
+        
+    - name: Display Python Version
+      run: Python-3.4.10\PCbuild\amd64\python.exe --version
