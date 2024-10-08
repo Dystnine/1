@@ -23,7 +23,7 @@ jobs:
         choco install -y winflexbison3
         choco install -y ninja
         choco install -y visualstudio-installer
-        choco install -y visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
+        choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
 
     - name: Download Python 3.9 Source Code
       run: |
