@@ -1,4 +1,4 @@
-name: Build Python 3.4
+name: Build Python 3.9
 
 on:
   push:
@@ -16,28 +16,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Python 3.4 dependencies
+    - name: Set up Python 3.9 dependencies
       run: |
         choco install -y nasm
         choco install -y strawberryperl
         choco install -y winflexbison3
         choco install -y ninja
+        choco install -y visualstudio-installer
+        choco install -y visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
 
-    - name: Download Python 3.4 Source Code
+    - name: Download Python 3.9 Source Code
       run: |
-        curl -O https://www.python.org/ftp/python/3.4.10/Python-3.4.10.tgz
-        tar xzf Python-3.4.10.tgz
+        curl -O https://www.python.org/ftp/python/3.9.20/Python-3.9.20.tgz
+        tar xzf Python-3.9.20.tgz
 
     - name: Configure and Build
       run: |
-        cd Python-3.4.10
-        PCbuild\build.bat -e
+        cd Python-3.9.20
+        PCbuild\build.bat -e -p x64
 
     - name: Archive Build Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
-        name: python-3.4.10-build
-        path: Python-3.4.10\PCbuild\amd64
+        name: python-3.9.20-build
+        path: Python-3.9.20\PCbuild\amd64
         
     - name: Display Python Version
-      run: Python-3.4.10\PCbuild\amd64\python.exe --version
+      run: Python-3.9.20\PCbuild\amd64\python.exe --version
