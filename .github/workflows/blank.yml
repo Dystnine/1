@@ -1,4 +1,4 @@
-name: Build Python 3.9
+name: Build Python 3.8
 
 on:
   push:
@@ -16,38 +16,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Setup cache for Chocolatey
-      uses: actions/cache@v2
-      with:
-        path: C:\ProgramData\chocolatey\lib
-        key: ${{ runner.os }}-choco-${{ hashFiles('**/build-python-3.9.yml') }}
-        restore-keys: |
-          ${{ runner.os }}-choco-
-
-    - name: Install dependencies
+    - name: Set up Python 3.8 dependencies
       run: |
         choco install -y nasm
         choco install -y strawberryperl
         choco install -y winflexbison3
         choco install -y ninja
         choco install -y visualstudio-installer
-        choco install -y visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional" --timeout 0
-
-    - name: Download Python 3.9 Source Code
+        choco install -y visualstudio2015buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
+    - name: Download Python 3.8 Source Code
       run: |
-        curl -O https://www.python.org/ftp/python/3.9.20/Python-3.9.20.tgz
-        tar xzf Python-3.9.20.tgz
-
+        curl -O https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz
+        tar xzf Python-3.8.20.tgz
     - name: Configure and Build
       run: |
-        cd Python-3.9.20
+        cd Python-3.8.20
         PCbuild\build.bat -e -p x64
-
     - name: Archive Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: python-3.9.20-build
-        path: Python-3.9.20\PCbuild\amd64
+        name: python-3.8.20-build
+        path: Python-3.8.20\PCbuild\amd64
         
     - name: Display Python Version
-      run: Python-3.9.20\PCbuild\amd64\python.exe --version
+      run: Python-3.8.20\PCbuild\amd64\python.exe --version
